@@ -1,4 +1,6 @@
-﻿using JetBrains.Annotations;
+﻿#nullable enable
+
+using JetBrains.Annotations;
 using Robust.Shared.Serialization.Manager;
 using Robust.Shared.Serialization.Markdown.Mapping;
 using Robust.Shared.Serialization.Markdown.Value;
@@ -29,19 +31,19 @@ public sealed class WindowDescriptor : ControlDescriptor {
     [DataField("is-pane")]
     public bool IsPane = false;
     [DataField("icon")]
-    public string Icon = null;
+    public string? Icon = null;
     [DataField("menu")]
-    public string Menu = null;
+    public string? Menu = null;
     [DataField("title")]
-    public string Title = null;
+    public string? Title = null;
     [DataField("macro")]
-    public string Macro { get; init; } = null;
+    public string? Macro { get; init; } = null;
     [DataField("on-close")]
-    public string OnClose { get; init; } = null;
+    public string? OnClose { get; init; } = null;
 
     public readonly List<ControlDescriptor> ControlDescriptors;
 
-    public WindowDescriptor(string name, List<ControlDescriptor> controlDescriptors = null) {
+    public WindowDescriptor(string name, List<ControlDescriptor>? controlDescriptors = null) {
         ControlDescriptors = controlDescriptors ?? new();
         Name = name;
     }
@@ -51,7 +53,7 @@ public sealed class WindowDescriptor : ControlDescriptor {
 
     }
 
-    public override ControlDescriptor CreateChildDescriptor(ISerializationManager serializationManager, MappingDataNode attributes) {
+    public override ControlDescriptor? CreateChildDescriptor(ISerializationManager serializationManager, MappingDataNode attributes) {
         if (!attributes.TryGet("type", out var elementType) || elementType is not ValueDataNode elementTypeValue)
             return null;
 
@@ -60,12 +62,12 @@ public sealed class WindowDescriptor : ControlDescriptor {
             attributes["name"] = new ValueDataNode(Name);
 
             // Read the attributes into this descriptor
-            serializationManager.Read(attributes, instanceProvider: () => this);
+            serializationManager.Read<WindowDescriptor?>(attributes, instanceProvider: () => this);
             return this;
         }
 
 
-        Type descriptorType = elementTypeValue.Value switch {
+        Type? descriptorType = elementTypeValue.Value switch {
             "MAP" => typeof(ControlDescriptorMap),
             "CHILD" => typeof(ControlDescriptorChild),
             "OUTPUT" => typeof(ControlDescriptorOutput),
@@ -82,13 +84,15 @@ public sealed class WindowDescriptor : ControlDescriptor {
         if (descriptorType == null)
             return null;
 
-        ControlDescriptor child = (ControlDescriptor) serializationManager.Read(descriptorType, attributes);
+        ControlDescriptor? child = (ControlDescriptor?) serializationManager.Read(descriptorType, attributes);
+        if (child == null)
+            return null;
         ControlDescriptors.Add(child);
         return child;
     }
 
     public override ElementDescriptor CreateCopy(ISerializationManager serializationManager, string name) {
-        var copy = serializationManager.CreateCopy(this);
+        var copy = serializationManager.CreateCopy(this, notNullableOverride: true);
 
         copy._name = name;
         return copy;
@@ -104,9 +108,9 @@ public sealed class WindowDescriptor : ControlDescriptor {
 
 public sealed class ControlDescriptorChild : ControlDescriptor {
     [DataField("left")]
-    public string Left = null;
+    public string? Left = null;
     [DataField("right")]
-    public string Right = null;
+    public string? Right = null;
     [DataField("is-vert")]
     public bool IsVert = false;
 }
@@ -116,9 +120,9 @@ public sealed class ControlDescriptorInput : ControlDescriptor {
 
 public sealed class ControlDescriptorButton : ControlDescriptor {
     [DataField("text")]
-    public string Text = null;
+    public string? Text = null;
     [DataField("command")]
-    public string Command = null;
+    public string? Command = null;
 }
 
 public sealed class ControlDescriptorOutput : ControlDescriptor {
@@ -135,7 +139,7 @@ public sealed class ControlDescriptorBrowser : ControlDescriptor {
 
 public sealed class ControlDescriptorLabel : ControlDescriptor {
     [DataField("text")]
-    public string Text = null;
+    public string? Text = null;
 }
 
 public sealed class ControlDescriptorGrid : ControlDescriptor {
@@ -143,3 +147,5 @@ public sealed class ControlDescriptorGrid : ControlDescriptor {
 
 public sealed class ControlDescriptorTab : ControlDescriptor {
 }
+
+#nullable restore
